@@ -30,9 +30,9 @@
 
 
                 <div class="card">
-                    <form action="{{ route('products.update', $product) }}" method="POST">
+                    <form action="{{ route('products.newupdate', $product) }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        @method('PUT')
+                        {{-- @method('PUT') --}}
                         <div class="card-header">
                             <h4>Input Text</h4>
                         </div>

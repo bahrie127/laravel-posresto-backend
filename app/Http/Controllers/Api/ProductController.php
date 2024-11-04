@@ -13,8 +13,10 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //all products
+
         $products = \App\Models\Product::orderBy('id', 'desc')->get();
+
+        $products->load('category');
         return response()->json([
             'success' => true,
             'message' => 'List Data Product',
@@ -37,7 +39,7 @@ class ProductController extends Controller
         ]);
 
         $filename = time() . '.' . $request->image->extension();
-        $request->image->storeAs('public/products', $filename);
+
         $product = \App\Models\Product::create([
             'name' => $request->name,
             'price' => (int) $request->price,
@@ -45,8 +47,15 @@ class ProductController extends Controller
             'category_id' => $request->category_id,
             'is_best_seller' => $request->is_best_seller,
             'image' => $filename,
-            // 'is_favorite' => $request->is_favorite
+
         ]);
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $image->storeAs('public/products', $product->id . '.' . $image->getClientOriginalExtension());
+            $product->image = 'storage/products/' . $product->id . '.' . $image->getClientOriginalExtension();
+            $product->save();
+        }
 
         if ($product) {
             return response()->json([
@@ -65,7 +74,7 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, )
+    public function update(Request $request,)
     {
         $request->validate([
             'id' => 'required',
