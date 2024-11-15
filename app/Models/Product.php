@@ -18,6 +18,7 @@ class Product extends Model
         'status',
         'is_favorite',
         'category_id',
+        'cabang_id'
     ];
 
     public function category()

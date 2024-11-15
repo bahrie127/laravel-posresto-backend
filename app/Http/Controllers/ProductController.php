@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 class ProductController extends Controller
 {
     // index
     public function index()
     {
-        $products = Product::paginate(10);
+        // get product by cabang_id paginate 10
+        $products = Product::where('cabang_id', Auth::user()->id)->paginate(10);
+        // $products = Product::paginate(10);
         return view('pages.products.index', compact('products'));
     }
 
@@ -34,7 +36,7 @@ class ProductController extends Controller
             'stock' => 'required|numeric',
             'status' => 'required|boolean',
             'is_favorite' => 'required|boolean',
-
+            'cabang_id' => 'required',
         ]);
 
         // store the request...
@@ -46,6 +48,7 @@ class ProductController extends Controller
         $product->stock = $request->stock;
         $product->status = $request->status;
         $product->is_favorite = $request->is_favorite;
+        $product->cabang_id = Auth::user()->id;
 
         $product->save();
 
@@ -97,6 +100,7 @@ class ProductController extends Controller
         $product->stock = $request->stock;
         $product->status = $request->status;
         $product->is_favorite = $request->is_favorite;
+        $product->cabang_id = Auth::user()->id;
         $product->save();
 
         //save image

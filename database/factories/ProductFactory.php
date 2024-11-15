@@ -25,6 +25,7 @@ class ProductFactory extends Factory
             'status' => $this->faker->boolean,
             'is_favorite' => $this->faker->boolean,
             'category_id' => $this->faker->numberBetween(1, 4),
+            'cabang_id' => $this->faker->numberBetween(1, 2),
         ];
     }
 }

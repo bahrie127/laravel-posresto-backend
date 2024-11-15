@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -13,8 +14,9 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //all products
-        $products = \App\Models\Product::orderBy('id', 'desc')->get();
+        //all products by cabang_id
+        $products = \App\Models\Product::where('cabang_id', Auth::user()->id)->get();
+        // $products = \App\Models\Product::orderBy('id', 'desc')->get();
         return response()->json([
             'success' => true,
             'message' => 'List Data Product',
@@ -27,38 +29,47 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|min:3',
-            'price' => 'required|integer',
-            'stock' => 'required|integer',
-            'category_id' => 'required',
-            'is_best_seller' => 'required',
-            'image' => 'required|image|mimes:png,jpg,jpeg'
-        ]);
+        try {
+            $request->validate([
+                'name' => 'required|min:3',
+                'price' => 'required|integer',
+                'stock' => 'required|integer',
+                'category_id' => 'required',
+                'is_best_seller' => 'required',
+                'image' => 'required|image|mimes:png,jpg,jpeg',
+                'cabang_id' => 'required'
+            ]);
 
-        $filename = time() . '.' . $request->image->extension();
-        $request->image->storeAs('public/products', $filename);
-        $product = \App\Models\Product::create([
-            'name' => $request->name,
-            'price' => (int) $request->price,
-            'stock' => (int) $request->stock,
-            'category_id' => $request->category_id,
-            'is_best_seller' => $request->is_best_seller,
-            'image' => $filename,
-            // 'is_favorite' => $request->is_favorite
-        ]);
+            $filename = time() . '.' . $request->image->extension();
+            $request->image->storeAs('public/products', $filename);
+            $product = \App\Models\Product::create([
+                'name' => $request->name,
+                'price' => (int) $request->price,
+                'stock' => (int) $request->stock,
+                'category_id' => $request->category_id,
+                'is_best_seller' => $request->is_best_seller,
+                'image' => $filename,
+                'cabang_id' => $request->cabang_id
+                // 'is_favorite' => $request->is_favorite
+            ]);
 
-        if ($product) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Product Created',
-                'data' => $product
-            ], 201);
-        } else {
+            if ($product) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product Created',
+                    'data' => $product
+                ], 201);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product Failed to Save',
+                ], 409);
+            }
+        } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product Failed to Save',
-            ], 409);
+                'message' => $th->getMessage(),
+            ], 500);
         }
     }
 
@@ -73,13 +84,15 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'stock' => 'required|numeric',
             'category_id' => 'required',
-            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048'
+            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+            'cabang_id' => 'required'
         ]);
         $product = \App\Models\Product::findOrFail($request->id);
         $product->name = $request->name;
         $product->price = $request->price;
         $product->category_id = $request->category_id;
         $product->stock = $request->stock;
+        $product->cabang_id = $request->cabang_id;
         if ($request->hasFile('image')) {
             Storage::delete('public/products/' . $product->image);
             $filename = time() . '.' . $request->image->extension();
