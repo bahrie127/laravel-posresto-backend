@@ -21,6 +21,7 @@ class Order extends Model
         'total_item',
         'id_kasir',
         'nama_kasir',
-        'transaction_time'
+        'transaction_time',
+        'room_id'
     ];
 }
