@@ -102,4 +102,291 @@ class OrderController extends Controller
             ]
         ], 200);
     }
+
+    //weekly summary
+//     {
+//   "report_period": {
+//     "start_date": "2025-06-23",
+//     "end_date": "2025-06-29"
+//   },
+//   "summary": {
+//     "total_orders": 128,
+//     "total_revenue": 15750000,
+//     "average_order_value": 123047,
+//     "top_selling_product": {
+//       "product_id": 12,
+//       "name": "Kopi Susu Gula Aren",
+//       "quantity_sold": 85,
+//       "total_sales": 1275000
+//     },
+//     "most_active_day": {
+//       "date": "2025-06-28",
+//       "total_orders": 35,
+//       "total_sales": 3950000
+//     }
+//   },
+//   "daily_sales": [
+//     {
+//       "date": "2025-06-23",
+//       "total_orders": 15,
+//       "total_sales": 1750000
+//     },
+//     {
+//       "date": "2025-06-24",
+//       "total_orders": 20,
+//       "total_sales": 2000000
+//     },
+//     {
+//       "date": "2025-06-25",
+//       "total_orders": 18,
+//       "total_sales": 1900000
+//     },
+//     {
+//       "date": "2025-06-26",
+//       "total_orders": 12,
+//       "total_sales": 1500000
+//     },
+//     {
+//       "date": "2025-06-27",
+//       "total_orders": 28,
+//       "total_sales": 3100000
+//     },
+//     {
+//       "date": "2025-06-28",
+//       "total_orders": 35,
+//       "total_sales": 3950000
+//     },
+//     {
+//       "date": "2025-06-29",
+//       "total_orders": 10,
+//       "total_sales": 900000
+//     }
+//   ],
+//   "top_5_products": [
+//     {
+//       "product_id": 12,
+//       "name": "Kopi Susu Gula Aren",
+//       "quantity_sold": 85,
+//       "total_sales": 1275000
+//     },
+//     {
+//       "product_id": 8,
+//       "name": "Roti Bakar Coklat",
+//       "quantity_sold": 70,
+//       "total_sales": 1050000
+//     },
+//     {
+//       "product_id": 3,
+//       "name": "Es Teh Manis",
+//       "quantity_sold": 65,
+//       "total_sales": 650000
+//     },
+//     {
+//       "product_id": 5,
+//       "name": "Mie Goreng Spesial",
+//       "quantity_sold": 50,
+//       "total_sales": 1500000
+//     },
+//     {
+//       "product_id": 9,
+//       "name": "Kopi Hitam",
+//       "quantity_sold": 45,
+//       "total_sales": 675000
+//     }
+//   ]
+// }
+
+    public function weeklySummary(Request $request)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Validate the date range
+        if (!$startDate || !$endDate) {
+            return response()->json(['error' => 'Start date and end date are required'], 400);
+        }
+
+        // Fetch orders within the date range
+        $orders = Order::whereBetween('created_at', [$startDate, $endDate])->get();
+
+        // Calculate total orders and revenue
+        $totalOrders = $orders->count();
+        $totalRevenue = $orders->sum('payment_amount');
+
+        // Calculate average order value
+        $averageOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+
+        // Group orders by day
+        $dailySales = [];
+        foreach ($orders as $order) {
+            $date = $order->created_at->format('Y-m-d');
+            if (!isset($dailySales[$date])) {
+                $dailySales[$date] = [
+                    'date' => $date,
+                    'total_orders' => 0,
+                    'total_sales' => 0,
+                ];
+            }
+            $dailySales[$date]['total_orders']++;
+            $dailySales[$date]['total_sales'] += $order->payment_amount;
+        }
+        $dailySales = array_values($dailySales);
+
+        // Find top selling product
+        $topSellingProduct = null;
+        if ($totalOrders > 0) {
+            $topSellingProduct = OrderItem::selectRaw('product_id, SUM(quantity) as quantity_sold, SUM(price * quantity) as total_sales')
+                ->whereIn('order_id', $orders->pluck('id'))
+                ->groupBy('product_id')
+                ->orderByDesc('quantity_sold')
+                ->first();
+            if ($topSellingProduct) {
+                // Get product details
+                $topSellingProductDetails = \App\Models\Product::find($topSellingProduct->product_id);
+                if ($topSellingProductDetails) {
+                    $topSellingProduct->name = $topSellingProductDetails->name;
+                }
+            }
+        }
+
+        // Find most active day
+        $mostActiveDay = collect($dailySales)->sortByDesc('total_orders')->first();
+
+        return response()->json([
+            'report_period' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+            'summary' => [
+                'total_orders' => $totalOrders,
+                'total_revenue' => $totalRevenue,
+                'average_order_value' => $averageOrderValue,
+                'top_selling_product' => $topSellingProduct ? [
+                    'product_id' => $topSellingProduct->product_id,
+                    'name' => $topSellingProduct->name,
+                    'quantity_sold' => $topSellingProduct->quantity_sold,
+                    'total_sales' => $topSellingProduct->total_sales,
+                ] : null,
+                'most_active_day' => $mostActiveDay ? [
+                    'date' => $mostActiveDay['date'],
+                    'total_orders' => $mostActiveDay['total_orders'],
+                    'total_sales' => $mostActiveDay['total_sales'],
+                ] : null,
+            ],
+            'daily_sales' => $dailySales,
+            'top_5_products' => OrderItem::selectRaw('product_id, SUM(quantity) as quantity_sold, SUM(price * quantity) as total_sales')
+                ->whereIn('order_id', $orders->pluck('id'))
+                ->groupBy('product_id')
+                ->orderByDesc('quantity_sold')
+                ->take(5)
+                ->get()
+                ->map(function ($item) {
+                    $product = \App\Models\Product::find($item->product_id);
+                    return [
+                        'product_id' => $item->product_id,
+                        'name' => $product ? $product->name : 'Unknown Product',
+                        'quantity_sold' => $item->quantity_sold,
+                        'total_sales' => $item->total_sales,
+                    ];
+                }),
+        ], 200);
+    }
+
+    //dummy weekly summary
+    public function dummyWeeklySummary()
+    {
+        return response()->json([
+            'report_period' => [
+                'start_date' => '2025-06-23',
+                'end_date' => '2025-06-29',
+            ],
+            'summary' => [
+                'total_orders' => 128,
+                'total_revenue' => 15750000,
+                'average_order_value' => 123047,
+                'top_selling_product' => [
+                    'product_id' => 12,
+                    'name' => 'Kopi Susu Gula Aren',
+                    'quantity_sold' => 85,
+                    'total_sales' => 1275000,
+                ],
+                'most_active_day' => [
+                    'date' => '2025-06-28',
+                    'total_orders' => 35,
+                    'total_sales' => 3950000,
+                ],
+            ],
+            'daily_sales' => [
+                [
+                    'date' => '2025-06-23',
+                    'total_orders' => 15,
+                    'total_sales' => 1750000,
+                ],
+                [
+                    'date' => '2025-06-24',
+                    'total_orders' => 20,
+                    'total_sales' => 2000000,
+                ],
+                [
+                    'date' => '2025-06-25',
+                    'total_orders' => 18,
+                    'total_sales' => 1900000,
+                ],
+                [
+                    'date' => '2025-06-26',
+                    'total_orders' => 12,
+                    'total_sales' => 1500000,
+                ],
+                [
+                    'date' => '2025-06-27',
+                    'total_orders' => 28,
+                    'total_sales' => 3100000,
+                ],
+                [
+                    'date' => '2025-06-28',
+                    'total_orders' => 35,
+                    'total_sales' => 3950000,
+                ],
+                [
+                    'date' => '2025-06-29',
+                    'total_orders' => 10,
+                    'total_sales' => 900000,
+                ],
+            ],
+            'top_5_products' => [
+                [
+                    'product_id' => 12,
+                    'name' => 'Kopi Susu Gula Aren',
+                    'quantity_sold' => 85,
+                    'total_sales' => 1275000,
+                ],
+                [
+                    'product_id' => 8,
+                    'name' => 'Roti Bakar Coklat',
+                    'quantity_sold' => 70,
+                    'total_sales' => 1050000,
+                ],
+                [
+                    'product_id' => 3,
+                    'name' => 'Es Teh Manis',
+                    'quantity_sold' => 65,
+                    'total_sales' => 650000,
+                ],
+                [
+                    'product_id' => 5,
+                    'name' => 'Mie Goreng Spesial',
+                    'quantity_sold' => 50,
+                    'total_sales' => 1500000,
+                ],
+                [
+                    'product_id' => 9,
+                    'name' => 'Kopi Hitam',
+                    'quantity_sold' => 45,
+                    'total_sales' => 675000,
+                ],
+            ],
+        ], 200);
+    }
+
+
 }

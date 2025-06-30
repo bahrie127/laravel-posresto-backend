@@ -46,3 +46,6 @@ Route::get('/orders/{date?}', [App\Http\Controllers\Api\OrderController::class, 
 Route::get('/summary/{date?}', [App\Http\Controllers\Api\OrderController::class, 'summary'])->middleware('auth:sanctum');
 Route::get('/order-item/{date?}', [App\Http\Controllers\Api\OrderItemController::class, 'index'])->middleware('auth:sanctum');
 Route::get('/order-sales', [App\Http\Controllers\Api\OrderItemController::class, 'orderSales'])->middleware('auth:sanctum');
+
+//dummy weekly report no need auth
+Route::get('/weekly-report', [App\Http\Controllers\Api\OrderController::class, 'dummyWeeklySummary']);
