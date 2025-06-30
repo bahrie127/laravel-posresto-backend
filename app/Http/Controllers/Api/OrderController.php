@@ -104,97 +104,97 @@ class OrderController extends Controller
     }
 
     //weekly summary
-//     {
-//   "report_period": {
-//     "start_date": "2025-06-23",
-//     "end_date": "2025-06-29"
-//   },
-//   "summary": {
-//     "total_orders": 128,
-//     "total_revenue": 15750000,
-//     "average_order_value": 123047,
-//     "top_selling_product": {
-//       "product_id": 12,
-//       "name": "Kopi Susu Gula Aren",
-//       "quantity_sold": 85,
-//       "total_sales": 1275000
-//     },
-//     "most_active_day": {
-//       "date": "2025-06-28",
-//       "total_orders": 35,
-//       "total_sales": 3950000
-//     }
-//   },
-//   "daily_sales": [
-//     {
-//       "date": "2025-06-23",
-//       "total_orders": 15,
-//       "total_sales": 1750000
-//     },
-//     {
-//       "date": "2025-06-24",
-//       "total_orders": 20,
-//       "total_sales": 2000000
-//     },
-//     {
-//       "date": "2025-06-25",
-//       "total_orders": 18,
-//       "total_sales": 1900000
-//     },
-//     {
-//       "date": "2025-06-26",
-//       "total_orders": 12,
-//       "total_sales": 1500000
-//     },
-//     {
-//       "date": "2025-06-27",
-//       "total_orders": 28,
-//       "total_sales": 3100000
-//     },
-//     {
-//       "date": "2025-06-28",
-//       "total_orders": 35,
-//       "total_sales": 3950000
-//     },
-//     {
-//       "date": "2025-06-29",
-//       "total_orders": 10,
-//       "total_sales": 900000
-//     }
-//   ],
-//   "top_5_products": [
-//     {
-//       "product_id": 12,
-//       "name": "Kopi Susu Gula Aren",
-//       "quantity_sold": 85,
-//       "total_sales": 1275000
-//     },
-//     {
-//       "product_id": 8,
-//       "name": "Roti Bakar Coklat",
-//       "quantity_sold": 70,
-//       "total_sales": 1050000
-//     },
-//     {
-//       "product_id": 3,
-//       "name": "Es Teh Manis",
-//       "quantity_sold": 65,
-//       "total_sales": 650000
-//     },
-//     {
-//       "product_id": 5,
-//       "name": "Mie Goreng Spesial",
-//       "quantity_sold": 50,
-//       "total_sales": 1500000
-//     },
-//     {
-//       "product_id": 9,
-//       "name": "Kopi Hitam",
-//       "quantity_sold": 45,
-//       "total_sales": 675000
-//     }
-//   ]
-// }
+    //     {
+    //   "report_period": {
+    //     "start_date": "2025-06-23",
+    //     "end_date": "2025-06-29"
+    //   },
+    //   "summary": {
+    //     "total_orders": 128,
+    //     "total_revenue": 15750000,
+    //     "average_order_value": 123047,
+    //     "top_selling_product": {
+    //       "product_id": 12,
+    //       "name": "Kopi Susu Gula Aren",
+    //       "quantity_sold": 85,
+    //       "total_sales": 1275000
+    //     },
+    //     "most_active_day": {
+    //       "date": "2025-06-28",
+    //       "total_orders": 35,
+    //       "total_sales": 3950000
+    //     }
+    //   },
+    //   "daily_sales": [
+    //     {
+    //       "date": "2025-06-23",
+    //       "total_orders": 15,
+    //       "total_sales": 1750000
+    //     },
+    //     {
+    //       "date": "2025-06-24",
+    //       "total_orders": 20,
+    //       "total_sales": 2000000
+    //     },
+    //     {
+    //       "date": "2025-06-25",
+    //       "total_orders": 18,
+    //       "total_sales": 1900000
+    //     },
+    //     {
+    //       "date": "2025-06-26",
+    //       "total_orders": 12,
+    //       "total_sales": 1500000
+    //     },
+    //     {
+    //       "date": "2025-06-27",
+    //       "total_orders": 28,
+    //       "total_sales": 3100000
+    //     },
+    //     {
+    //       "date": "2025-06-28",
+    //       "total_orders": 35,
+    //       "total_sales": 3950000
+    //     },
+    //     {
+    //       "date": "2025-06-29",
+    //       "total_orders": 10,
+    //       "total_sales": 900000
+    //     }
+    //   ],
+    //   "top_5_products": [
+    //     {
+    //       "product_id": 12,
+    //       "name": "Kopi Susu Gula Aren",
+    //       "quantity_sold": 85,
+    //       "total_sales": 1275000
+    //     },
+    //     {
+    //       "product_id": 8,
+    //       "name": "Roti Bakar Coklat",
+    //       "quantity_sold": 70,
+    //       "total_sales": 1050000
+    //     },
+    //     {
+    //       "product_id": 3,
+    //       "name": "Es Teh Manis",
+    //       "quantity_sold": 65,
+    //       "total_sales": 650000
+    //     },
+    //     {
+    //       "product_id": 5,
+    //       "name": "Mie Goreng Spesial",
+    //       "quantity_sold": 50,
+    //       "total_sales": 1500000
+    //     },
+    //     {
+    //       "product_id": 9,
+    //       "name": "Kopi Hitam",
+    //       "quantity_sold": 45,
+    //       "total_sales": 675000
+    //     }
+    //   ]
+    // }
 
     public function weeklySummary(Request $request)
     {
@@ -296,97 +296,97 @@ class OrderController extends Controller
     public function dummyWeeklySummary()
     {
         return response()->json([
-            'report_period' => [
-                'start_date' => '2025-06-23',
-                'end_date' => '2025-06-29',
-            ],
-            'summary' => [
-                'total_orders' => 128,
-                'total_revenue' => 15750000,
-                'average_order_value' => 123047,
-                'top_selling_product' => [
-                    'product_id' => 12,
-                    'name' => 'Kopi Susu Gula Aren',
-                    'quantity_sold' => 85,
-                    'total_sales' => 1275000,
+            'data' => [
+                'report_period' => [
+                    'start_date' => '2025-06-23',
+                    'end_date' => '2025-06-29',
                 ],
-                'most_active_day' => [
-                    'date' => '2025-06-28',
-                    'total_orders' => 35,
-                    'total_sales' => 3950000,
+                'summary' => [
+                    'total_orders' => 128,
+                    'total_revenue' => 15750000,
+                    'average_order_value' => 123047,
+                    'top_selling_product' => [
+                        'product_id' => 12,
+                        'name' => 'Kopi Susu Gula Aren',
+                        'quantity_sold' => 85,
+                        'total_sales' => 1275000,
+                    ],
+                    'most_active_day' => [
+                        'date' => '2025-06-28',
+                        'total_orders' => 35,
+                        'total_sales' => 3950000,
+                    ],
                 ],
-            ],
-            'daily_sales' => [
-                [
-                    'date' => '2025-06-23',
-                    'total_orders' => 15,
-                    'total_sales' => 1750000,
+                'daily_sales' => [
+                    [
+                        'date' => '2025-06-23',
+                        'total_orders' => 15,
+                        'total_sales' => 1750000,
+                    ],
+                    [
+                        'date' => '2025-06-24',
+                        'total_orders' => 20,
+                        'total_sales' => 2000000,
+                    ],
+                    [
+                        'date' => '2025-06-25',
+                        'total_orders' => 18,
+                        'total_sales' => 1900000,
+                    ],
+                    [
+                        'date' => '2025-06-26',
+                        'total_orders' => 12,
+                        'total_sales' => 1500000,
+                    ],
+                    [
+                        'date' => '2025-06-27',
+                        'total_orders' => 28,
+                        'total_sales' => 3100000,
+                    ],
+                    [
+                        'date' => '2025-06-28',
+                        'total_orders' => 35,
+                        'total_sales' => 3950000,
+                    ],
+                    [
+                        'date' => '2025-06-29',
+                        'total_orders' => 10,
+                        'total_sales' => 900000,
+                    ],
                 ],
-                [
-                    'date' => '2025-06-24',
-                    'total_orders' => 20,
-                    'total_sales' => 2000000,
+                'top_5_products' => [
+                    [
+                        'product_id' => 12,
+                        'name' => 'Kopi Susu Gula Aren',
+                        'quantity_sold' => 85,
+                        'total_sales' => 1275000,
+                    ],
+                    [
+                        'product_id' => 8,
+                        'name' => 'Roti Bakar Coklat',
+                        'quantity_sold' => 70,
+                        'total_sales' => 1050000,
+                    ],
+                    [
+                        'product_id' => 3,
+                        'name' => 'Es Teh Manis',
+                        'quantity_sold' => 65,
+                        'total_sales' => 650000,
+                    ],
+                    [
+                        'product_id' => 5,
+                        'name' => 'Mie Goreng Spesial',
+                        'quantity_sold' => 50,
+                        'total_sales' => 1500000,
+                    ],
+                    [
+                        'product_id' => 9,
+                        'name' => 'Kopi Hitam',
+                        'quantity_sold' => 45,
+                        'total_sales' => 675000,
+                    ],
                 ],
-                [
-                    'date' => '2025-06-25',
-                    'total_orders' => 18,
-                    'total_sales' => 1900000,
-                ],
-                [
-                    'date' => '2025-06-26',
-                    'total_orders' => 12,
-                    'total_sales' => 1500000,
-                ],
-                [
-                    'date' => '2025-06-27',
-                    'total_orders' => 28,
-                    'total_sales' => 3100000,
-                ],
-                [
-                    'date' => '2025-06-28',
-                    'total_orders' => 35,
-                    'total_sales' => 3950000,
-                ],
-                [
-                    'date' => '2025-06-29',
-                    'total_orders' => 10,
-                    'total_sales' => 900000,
-                ],
-            ],
-            'top_5_products' => [
-                [
-                    'product_id' => 12,
-                    'name' => 'Kopi Susu Gula Aren',
-                    'quantity_sold' => 85,
-                    'total_sales' => 1275000,
-                ],
-                [
-                    'product_id' => 8,
-                    'name' => 'Roti Bakar Coklat',
-                    'quantity_sold' => 70,
-                    'total_sales' => 1050000,
-                ],
-                [
-                    'product_id' => 3,
-                    'name' => 'Es Teh Manis',
-                    'quantity_sold' => 65,
-                    'total_sales' => 650000,
-                ],
-                [
-                    'product_id' => 5,
-                    'name' => 'Mie Goreng Spesial',
-                    'quantity_sold' => 50,
-                    'total_sales' => 1500000,
-                ],
-                [
-                    'product_id' => 9,
-                    'name' => 'Kopi Hitam',
-                    'quantity_sold' => 45,
-                    'total_sales' => 675000,
-                ],
-            ],
+            ]
         ], 200);
     }
-
-
 }
