@@ -22,6 +22,24 @@ class Order extends Model
         'id_kasir',
         'nama_kasir',
         'transaction_time',
-        'room_id'
+        'room_id',
+        'note',
+        'status',
+        'is_canceled',
+        'canceled_by',
+        'canceled_at',
     ];
+
+    public function canceledBy()
+    {
+        return $this->belongsTo(User::class, 'canceled_by');
+    }
+
+    // app/Models/Order.php
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
 }

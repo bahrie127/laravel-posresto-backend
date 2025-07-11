@@ -46,3 +46,17 @@ Route::get('/orders/{date?}', [App\Http\Controllers\Api\OrderController::class, 
 Route::get('/summary/{date?}', [App\Http\Controllers\Api\OrderController::class, 'summary'])->middleware('auth:sanctum');
 Route::get('/order-item/{date?}', [App\Http\Controllers\Api\OrderItemController::class, 'index'])->middleware('auth:sanctum');
 Route::get('/order-sales', [App\Http\Controllers\Api\OrderItemController::class, 'orderSales'])->middleware('auth:sanctum');
+Route::post('/orders/{id}/cancel', [App\Http\Controllers\Api\OrderController::class, 'cancelOrder'])->middleware('auth:sanctum');
+Route::put('/orders/{id}/update', [App\Http\Controllers\Api\OrderController::class, 'updateOrder'])->middleware('auth:sanctum');
+Route::get('/orders/all', [App\Http\Controllers\Api\OrderController::class, 'getAllOrder'])->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('tables')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\TableManagementController::class, 'index']); // get all tables
+        Route::post('/', [App\Http\Controllers\Api\TableManagementController::class, 'store']); // create new table
+        Route::put('/{id}', [App\Http\Controllers\Api\TableManagementController::class, 'update']); // update table
+        Route::put('/{id}/position', [App\Http\Controllers\Api\TableManagementController::class, 'changePosition']); // change table position
+        Route::get('/status/{status}', [App\Http\Controllers\Api\TableManagementController::class, 'getByStatus']); // get tables by status
+        Route::delete('/{id}', [App\Http\Controllers\Api\TableManagementController::class, 'destroy']); // delete table
+    });
+});

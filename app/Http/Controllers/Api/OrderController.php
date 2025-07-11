@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -44,7 +46,9 @@ class OrderController extends Controller
             'id_kasir' => $request->id_kasir,
             'nama_kasir' => $request->nama_kasir,
             'transaction_time' => $request->transaction_time,
-            'room_id' => $request->room_id
+            'room_id' => $request->room_id,
+            'note' => $request->note ?? null,
+            'status' => 'success',
         ]);
 
         //create order items
@@ -53,7 +57,8 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'product_id' => $item['id_product'],
                 'quantity' => $item['quantity'],
-                'price' => $item['price']
+                'price' => $item['price'],
+                'note' => $item['note'] ?? null,
             ]);
         }
 
@@ -104,4 +109,106 @@ class OrderController extends Controller
             ]
         ], 200);
     }
+
+    public function cancelOrder($id, Request $request)
+    {
+        $order = Order::find($id);
+
+        if (!$order) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Order tidak ditemukan.'
+            ], 404);
+        }
+
+        $request->validate([
+            'pin' => 'required',
+        ]);
+
+        if ($request->pin !== '8888') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'PIN tidak valid.'
+            ], 401);
+        }
+
+
+        if ($order->is_canceled) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Order sudah dibatalkan sebelumnya.'
+            ], 400);
+        }
+
+        $order->update([
+            'is_canceled' => true,
+            'status' => 'cancelled',
+            'canceled_by' => auth()->id(), // pastikan auth() tersedia
+            'canceled_at' => now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order berhasil dibatalkan.',
+            'data' => $order
+        ]);
+    }
+
+    public function updateOrder(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:pending,success,cancelled',
+            'is_canceled' => 'required|boolean',
+            'canceled_by' => 'nullable|integer|exists:users,id',
+            'canceled_at' => 'nullable|date',
+        ]);
+
+        $order = Order::find($id);
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order tidak ditemukan.'
+            ], 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $order->update([
+                'status' => $request->status,
+                'is_canceled' => $request->is_canceled,
+                'canceled_by' => $request->is_canceled ? ($request->canceled_by ?? auth()->id()) : null,
+                'canceled_at' => $request->is_canceled ? ($request->canceled_at ?? now()) : null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order berhasil diperbarui.',
+                'data' => $order
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal memperbarui order.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getAllOrder()
+    {
+        $orders = Order::with('orderItems')->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $orders
+        ], 200);
+    }
+
 }
