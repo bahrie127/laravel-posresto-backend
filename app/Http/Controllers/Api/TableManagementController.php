@@ -134,4 +134,29 @@ class TableManagementController extends Controller
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
+
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $table = TableManagement::findOrFail($id);
+
+            $validated = $request->validate([
+                'status' => 'required|string|in:available,occupied,reserved,disabled,cleaning'
+            ]);
+
+            $table->update([
+                'status' => $validated['status']
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Table status updated successfully',
+                'data' => $table
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error("Update Table Status Error: " . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Server Error'], 500);
+        }
+    }
+
 }

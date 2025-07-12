@@ -55,7 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\TableManagementController::class, 'index']); // get all tables
         Route::post('/', [App\Http\Controllers\Api\TableManagementController::class, 'store']); // create new table
         Route::put('/{id}', [App\Http\Controllers\Api\TableManagementController::class, 'update']); // update table
-        Route::put('/{id}/position', [App\Http\Controllers\Api\TableManagementController::class, 'changePosition']); // change table position
+        Route::patch('/{id}/position', [App\Http\Controllers\Api\TableManagementController::class, 'changePosition']); // change table position
+        Route::patch('/{id}/status', [App\Http\Controllers\Api\TableManagementController::class, 'updateStatus']);
         Route::get('/status/{status}', [App\Http\Controllers\Api\TableManagementController::class, 'getByStatus']); // get tables by status
         Route::delete('/{id}', [App\Http\Controllers\Api\TableManagementController::class, 'destroy']); // delete table
     });
