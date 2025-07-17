@@ -61,3 +61,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [App\Http\Controllers\Api\TableManagementController::class, 'destroy']); // delete table
     });
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('draft-orders')->group(function () {
+        Route::post('/', [App\Http\Controllers\Api\DraftOrderController::class, 'store']);
+        Route::get('/', [App\Http\Controllers\Api\DraftOrderController::class, 'index']);
+        Route::get('/{id}', [App\Http\Controllers\Api\DraftOrderController::class, 'show']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\DraftOrderController::class, 'destroy']);
+    });
+});

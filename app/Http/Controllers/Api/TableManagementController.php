@@ -141,11 +141,13 @@ class TableManagementController extends Controller
             $table = TableManagement::findOrFail($id);
 
             $validated = $request->validate([
-                'status' => 'required|string|in:available,occupied,reserved,disabled,cleaning'
+                'status' => 'required|string|in:available,occupied,reserved,disabled,cleaning',
+                'order_id' => 'nullable|integer',
             ]);
 
             $table->update([
-                'status' => $validated['status']
+                'status' => $validated['status'],
+                'order_id' => $validated['order_id']
             ]);
 
             return response()->json([
