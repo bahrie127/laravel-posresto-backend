@@ -93,6 +93,7 @@ class DraftOrderController extends Controller
             'orders.*.product_id' => 'required|exists:products,id',
             'orders.*.quantity' => 'required|integer|min:1',
             'orders.*.price' => 'required|numeric|min:0',
+            'orders.*.note' => 'nullable|string',
         ]);
 
         // Update data utama DraftOrder jika ada
