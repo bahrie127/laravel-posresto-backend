@@ -27,6 +27,8 @@ class OrderController extends Controller
             'total_item' => 'required',
             'id_kasir' => 'required',
             'nama_kasir' => 'required',
+            'customer_name' => 'required',
+            'table_number' => 'required',
             'transaction_time' => 'required',
             'room_id' => 'required',
             // 'order_items' => 'required'
@@ -45,6 +47,8 @@ class OrderController extends Controller
             'total_item' => $request->total_item,
             'id_kasir' => $request->id_kasir,
             'nama_kasir' => $request->nama_kasir,
+            'customer_name' => $request->customer_name,
+            'table_number' => $request->table_number,
             'transaction_time' => $request->transaction_time,
             'room_id' => $request->room_id,
             'note' => $request->note ?? null,

@@ -26,6 +26,7 @@ class StoreDraftOrderRequest extends FormRequest
             'total_item' => 'required|integer',
             'subtotal' => 'required|integer',
             'tax' => 'nullable|integer',
+            'tax_percent' => 'nullable|integer',
             'discount' => 'nullable|integer',
             'discount_amount' => 'nullable|integer',
             'service_charge' => 'nullable|integer',

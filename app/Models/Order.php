@@ -21,6 +21,8 @@ class Order extends Model
         'total_item',
         'id_kasir',
         'nama_kasir',
+        'customer_name',
+        'table_number',
         'transaction_time',
         'room_id',
         'note',

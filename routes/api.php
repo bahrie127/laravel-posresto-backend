@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [App\Http\Controllers\Api\DraftOrderController::class, 'store']);
         Route::get('/', [App\Http\Controllers\Api\DraftOrderController::class, 'index']);
         Route::get('/{id}', [App\Http\Controllers\Api\DraftOrderController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\DraftOrderController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\Api\DraftOrderController::class, 'destroy']);
     });
 });

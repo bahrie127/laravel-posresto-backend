@@ -14,6 +14,7 @@ class DraftOrder extends Model
         'total_item',
         'subtotal',
         'tax',
+        'tax_percent',
         'discount',
         'discount_amount',
         'service_charge',
