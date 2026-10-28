@@ -3,18 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    //save order
+    // save order
     public function saveOrder(Request $request)
     {
-        //validate request
+        // validate request
         $request->validate([
             'payment_amount' => 'required',
             'sub_total' => 'required',
@@ -27,14 +28,38 @@ class OrderController extends Controller
             'total_item' => 'required',
             'id_kasir' => 'required',
             'nama_kasir' => 'required',
-            'customer_name' => 'required',
-            'table_number' => 'required',
+            // Pembeli walk-in tanpa nama/meja: dulu ditolak 422, sementara app sudah
+            // menampilkan "sukses", sehingga pesanan itu tidak pernah sampai ke server.
+            'customer_name' => 'nullable|string',
+            'table_number' => 'nullable|integer',
             'transaction_time' => 'required',
-            'room_id' => 'required',
-            // 'order_items' => 'required'
+            // 0/null = bukan tagihan kamar (kolom NOT NULL, dulu wajib dikirim).
+            'room_id' => 'nullable|integer',
+            // Dulu tidak divalidasi: order tanpa item tersimpan, item rusak = 500 setelah
+            // order terlanjur dibuat.
+            'order_items' => 'required|array|min:1',
+            'order_items.*.id_product' => 'required|exists:products,id',
+            'order_items.*.quantity' => 'required|integer|min:1',
+            'order_items.*.price' => 'required|numeric|min:0',
         ]);
 
-        //create order
+        // App mengirim ulang order yang belum tersinkron (offline/timeout). Waktu transaksi
+        // (ISO, sampai mikrodetik) + kasir unik per order, jadi kiriman ulang tidak
+        // menggandakan pesanan dan laporan.
+        $order = Order::query()
+            ->where('id_kasir', $request->id_kasir)
+            ->where('transaction_time', $request->transaction_time)
+            ->first()
+            ?? DB::transaction(fn () => $this->createOrder($request));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $order,
+        ], 200);
+    }
+
+    private function createOrder(Request $request): Order
+    {
         $order = Order::create([
             'payment_amount' => $request->payment_amount,
             'sub_total' => $request->sub_total,
@@ -50,12 +75,11 @@ class OrderController extends Controller
             'customer_name' => $request->customer_name,
             'table_number' => $request->table_number,
             'transaction_time' => $request->transaction_time,
-            'room_id' => $request->room_id,
+            'room_id' => $request->room_id ?? 0,
             'note' => $request->note ?? null,
             'status' => 'success',
         ]);
 
-        //create order items
         foreach ($request->order_items as $item) {
             OrderItem::create([
                 'order_id' => $order->id,
@@ -66,62 +90,73 @@ class OrderController extends Controller
             ]);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $order
-        ], 200);
+        return $order;
     }
 
     public function index(Request $request)
     {
-        $start_date = $request->input('start_date');
-        $end_date = $request->input('end_date');
-        if ($start_date && $end_date) {
-            $orders = Order::whereBetween('created_at', [$start_date, $end_date])->get();
-        } else {
-            $orders = Order::all();
-        }
+        $orders = $this->inDateRange(Order::query(), $request, 'created_at')->get();
+
         return response()->json([
             'status' => 'success',
-            'data' => $orders
+            'data' => $orders,
         ], 200);
     }
 
+    /**
+     * Ringkasan pendapatan. Pesanan batal tidak dihitung; pendapatan = total yang ditagih
+     * (bukan uang yang diterima, yang ikut menghitung kembalian); pajak menambah total.
+     */
     public function summary(Request $request)
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-        $query = Order::query();
-        if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
-        }
-        $totalRevenue = $query->sum('payment_amount');
-        $totalDiscount = $query->sum('discount_amount');
-        $totalTax = $query->sum('tax');
-        $totalServiceCharge = $query->sum('service_charge');
-        $totalSubtotal = $query->sum('sub_total');
-        $total = $totalSubtotal - $totalDiscount - $totalTax + $totalServiceCharge;
+        $totals = $this->inDateRange(Order::query(), $request, 'created_at')
+            ->where('is_canceled', false)
+            ->selectRaw('COALESCE(SUM(total), 0) AS revenue, COALESCE(SUM(discount_amount), 0) AS discount,
+                COALESCE(SUM(tax), 0) AS tax, COALESCE(SUM(service_charge), 0) AS service, COALESCE(SUM(sub_total), 0) AS subtotal')
+            ->first();
+
+        $subtotal = (int) $totals->subtotal;
+        $discount = (int) $totals->discount;
+        $tax = (int) $totals->tax;
+        $service = (int) $totals->service;
+
         return response()->json([
             'status' => 'success',
             'data' => [
-                'total_revenue' => $totalRevenue,
-                'total_discount' => $totalDiscount,
-                'total_tax' => $totalTax,
-                'total_subtotal' => $totalSubtotal,
-                'total_service_charge' => $totalServiceCharge,
-                'total' => $total,
-            ]
+                'total_revenue' => (int) $totals->revenue,
+                'total_discount' => $discount,
+                'total_tax' => $tax,
+                'total_subtotal' => $subtotal,
+                'total_service_charge' => $service,
+                'total' => $subtotal - $discount + $tax + $service,
+            ],
         ], 200);
+    }
+
+    /**
+     * App mengirim tanggal `Y-m-d`. Dulu dipakai langsung di whereBetween sehingga tanggal
+     * akhir berhenti di 00:00:00 dan laporan "hari ini" selalu kosong.
+     */
+    private function inDateRange(Builder $query, Request $request, string $column): Builder
+    {
+        $start = $request->input('start_date');
+        $end = $request->input('end_date');
+
+        if ($start && $end) {
+            $query->whereDate($column, '>=', $start)->whereDate($column, '<=', $end);
+        }
+
+        return $query;
     }
 
     public function cancelOrder($id, Request $request)
     {
         $order = Order::find($id);
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Order tidak ditemukan.'
+                'message' => 'Order tidak ditemukan.',
             ], 404);
         }
 
@@ -129,18 +164,17 @@ class OrderController extends Controller
             'pin' => 'required',
         ]);
 
-        if ($request->pin !== '8888') {
+        if (! hash_equals((string) config('posresto.cancel_pin'), (string) $request->pin)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'PIN tidak valid.'
+                'message' => 'PIN tidak valid.',
             ], 401);
         }
-
 
         if ($order->is_canceled) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Order sudah dibatalkan sebelumnya.'
+                'message' => 'Order sudah dibatalkan sebelumnya.',
             ], 400);
         }
 
@@ -154,7 +188,7 @@ class OrderController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Order berhasil dibatalkan.',
-            'data' => $order
+            'data' => $order,
         ]);
     }
 
@@ -169,10 +203,10 @@ class OrderController extends Controller
 
         $order = Order::find($id);
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'status' => false,
-                'message' => 'Order tidak ditemukan.'
+                'message' => 'Order tidak ditemukan.',
             ], 404);
         }
 
@@ -191,7 +225,7 @@ class OrderController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Order berhasil diperbarui.',
-                'data' => $order
+                'data' => $order,
             ], 200);
 
         } catch (\Exception $e) {
@@ -200,7 +234,7 @@ class OrderController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal memperbarui order.',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -211,8 +245,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $orders
+            'data' => $orders,
         ], 200);
     }
-
 }

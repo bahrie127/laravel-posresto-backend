@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TableManagement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class TableManagementController extends Controller
 {
@@ -13,12 +14,17 @@ class TableManagementController extends Controller
     {
         try {
             $tables = TableManagement::all();
+
             return response()->json([
                 'status' => true,
                 'data' => $tables,
             ], 200);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            Log::error("Get Tables Error: " . $e->getMessage());
+            Log::error('Get Tables Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
@@ -45,8 +51,12 @@ class TableManagementController extends Controller
                 'message' => 'Table created successfully',
                 'data' => $table,
             ], 201);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            Log::error("Create Table Error: " . $e->getMessage());
+            Log::error('Create Table Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
@@ -60,7 +70,7 @@ class TableManagementController extends Controller
                 'table_name' => 'sometimes|string',
                 'x_position' => 'sometimes|numeric',
                 'y_position' => 'sometimes|numeric',
-                'status' => 'sometimes|string',
+                'status' => 'sometimes|in:available,occupied,reserved,unavailable',
                 'order_id' => 'sometimes|nullable|integer',
                 'payment_amount' => 'sometimes|nullable|numeric',
                 'start_time' => 'sometimes|nullable|date',
@@ -73,8 +83,12 @@ class TableManagementController extends Controller
                 'message' => 'Table updated successfully',
                 'data' => $table,
             ], 200);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            Log::error("Update Table Error: " . $e->getMessage());
+            Log::error('Update Table Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
@@ -98,8 +112,12 @@ class TableManagementController extends Controller
                 'status' => true,
                 'message' => 'Table position updated successfully',
             ], 200);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            Log::error("Change Position Error: " . $e->getMessage());
+            Log::error('Change Position Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
@@ -114,8 +132,12 @@ class TableManagementController extends Controller
                 'status' => true,
                 'message' => 'Table deleted successfully',
             ], 200);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            Log::error("Delete Table Error: " . $e->getMessage());
+            Log::error('Delete Table Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
@@ -129,8 +151,12 @@ class TableManagementController extends Controller
                 'status' => true,
                 'data' => $tables,
             ], 200);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            Log::error("Get By Status Error: " . $e->getMessage());
+            Log::error('Get By Status Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
@@ -141,24 +167,32 @@ class TableManagementController extends Controller
             $table = TableManagement::findOrFail($id);
 
             $validated = $request->validate([
-                'status' => 'required|string|in:available,occupied,reserved,disabled,cleaning',
+                // Sesuai enum kolom; dulu "disabled"/"cleaning" lolos validasi lalu gagal di DB.
+                'status' => 'required|string|in:available,occupied,reserved,unavailable',
                 'order_id' => 'nullable|integer',
             ]);
 
+            // Meja mulai terisi = catat jam mulai (dulu kosong sehingga dialog meja di app
+            // gagal tampil); meja kosong lagi = lepas jam mulai & order.
+            $occupied = $validated['status'] === 'occupied';
             $table->update([
                 'status' => $validated['status'],
-                'order_id' => $validated['order_id']
+                'order_id' => $validated['order_id'] ?? null,
+                'start_time' => $occupied ? ($table->start_time ?? now()) : null,
             ]);
 
             return response()->json([
                 'status' => true,
                 'message' => 'Table status updated successfully',
-                'data' => $table
+                'data' => $table,
             ], 200);
+        } catch (ValidationException $e) {
+            // Input salah = 422 dengan pesannya, bukan "Server Error" 500.
+            throw $e;
         } catch (\Exception $e) {
-            \Log::error("Update Table Status Error: " . $e->getMessage());
+            \Log::error('Update Table Status Error: '.$e->getMessage());
+
             return response()->json(['status' => false, 'message' => 'Server Error'], 500);
         }
     }
-
 }
